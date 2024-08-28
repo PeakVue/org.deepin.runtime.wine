@@ -1,0 +1,42 @@
+version: "1"
+
+package:
+  id: org.deepin.runtime.wine
+  name: deepin wine runtime
+  kind: runtime
+  version: 23.0.0.0
+  description: |
+    Wine is a compatibility layer capable of running Windows applications  
+    on Unix-like operating systems. It provides both a development toolkit  
+    for porting Windows sources to Unix and a program loader, allowing many  
+    unmodified Windows binaries to run on x86, x86_64, and ARM architectures.
+
+
+base: org.deepin.wine.base/23.0.0 
+
+build: |
+  # 设置.deb包的路径  
+  SOURCES="linglong/sources"  
+  DEB_PACKAGE_WINE="$SOURCES/deepin-wine8-stable_8.16linlong25_amd64.deb"  
+  DEB_PACKAGE_HELPER="$SOURCES/deepin-wine-helper_5.3.18_amd64.deb"
+  # 使用dpkg-deb解压.deb包的runtime部分到临时目录  
+  TEMP_DIR="$(mktemp -d)"  
+  dpkg-deb -x "$DEB_PACKAGE_WINE" "$TEMP_DIR"  
+  dpkg-deb -x "$DEB_PACKAGE_HELPER" "$TEMP_DIR" 
+  # 检查解压后的目录结构，并释放runtime目录到/runtime  
+  RUNTIME_PATH="$TEMP_DIR/runtime"  
+  if [ -d "$RUNTIME_PATH" ]; then  
+      # 释放runtime目录到/runtime  
+      # 使用rsync来避免复制过程中的一些问题，比如链接和特殊文件  
+      rsync -avh --progress "$RUNTIME_PATH"/ /runtime/  
+  fi   
+  # 清理临时目录  
+  rm -rf "$TEMP_DIR"  
+  
+sources:
+  - kind: file
+    url: http://aptly.uniontech.com/pkg/nonfree-eagle/release-candidate/d2luZTgtcnVudGltZTIwMjQtMDgtMjEgMTQ6NTU6MjA/pool/non-free/d/deepin-wine8-stable/deepin-wine8-stable_8.16linlong25_amd64.deb
+    digest: 3f0c72bc9672941b8aede33646ceb661db5f30319b07d76d46ff1d1bc8a20e3b
+  - kind: file
+    url: https://aptly.uniontech.com/pkg/nonfree-eagle/release-candidate/d2luZTgtcnVudGltZTIwMjQtMDgtMjEgMTQ6NTU6MjA/pool/non-free/d/deepin-wine-helper/deepin-wine-helper_5.3.18_amd64.deb
+    digest: 363a7ebd8041ed1ac0c25015dcaea46b7730b463b131dec0986f2024c884fe5d
